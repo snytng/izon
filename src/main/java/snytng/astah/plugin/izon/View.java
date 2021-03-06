@@ -7,10 +7,12 @@ import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -194,13 +196,13 @@ IDiagramEditorSelectionListener
 					List<IPresentation> sps = Arrays.stream(diagramViewManager.getSelectedPresentations())
 							.filter(p -> p instanceof INodePresentation)
 							.collect(Collectors.toList());
-					List<IPresentation> spall = new ArrayList<>();
+					Set<IPresentation> spall = new HashSet<>();
 
 					if(sps.isEmpty()) {
 						return;
 					}
 
-					while(true) {
+					do {
 						izonPresentationList.add(sps);
 						spall.addAll(sps);
 
@@ -213,13 +215,16 @@ IDiagramEditorSelectionListener
 								for(ILinkPresentation lp : lps) {
 									INodePresentation nps = lp.getSource();
 									if(! spall.contains(nps)) {
+										spall.add(nps);
 										tps.add(nps);
 									}
 									INodePresentation npt = lp.getTarget();
 									if(! spall.contains(npt)) {
+										spall.add(npt);
 										tps.add(npt);
 									}
 									if(! spall.contains(lp)) {
+										spall.add(lp);
 										tps.add(lp);
 									}
 								}
@@ -229,20 +234,20 @@ IDiagramEditorSelectionListener
 
 								INodePresentation nps = lp.getSource();
 								if(! spall.contains(nps)) {
+									spall.add(nps);
 									tps.add(nps);
 								}
 								INodePresentation npt = lp.getTarget();
 								if(! spall.contains(npt)) {
+									spall.add(npt);
 									tps.add(npt);
 								}
 							}
 						}
 
-						if(tps.isEmpty()) {
-							break;
-						}
 						sps = tps;
-					}
+
+					} while(!sps.isEmpty());
 
 					int i = 0;
 					String diagramName = "izon";
@@ -370,8 +375,11 @@ IDiagramEditorSelectionListener
 
 			izonCreatedPresentationList = new ArrayList<>();
 			for(INodePresentation np : nps) {
-				INodePresentation nnp = cde.createNodePresentation(np.getModel(), np.getLocation());
-				izonCreatedPresentationList.add(nnp);
+				System.out.println("np type=" + np.getType());
+				if(np.getType().equals("Class")) {
+					INodePresentation nnp = cde.createNodePresentation(np.getModel(), np.getLocation());
+					izonCreatedPresentationList.add(nnp);
+				}
 			}
 
 			for(ILinkPresentation lp : lps) {
