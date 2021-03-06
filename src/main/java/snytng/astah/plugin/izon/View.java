@@ -343,6 +343,15 @@ IDiagramEditorSelectionListener
 		return panel;
 	}
 
+	static List<String> linkPresentationTypes = new ArrayList<>();
+	static {
+		linkPresentationTypes.add("Association");
+		linkPresentationTypes.add("Generalization");
+		linkPresentationTypes.add("Realization");
+		linkPresentationTypes.add("Dependency");
+		linkPresentationTypes.add("Usage");
+	}
+
 	private void showIzon() {
 		if(izonDiagram == null) {
 			return;
@@ -375,10 +384,19 @@ IDiagramEditorSelectionListener
 
 			izonCreatedPresentationList = new ArrayList<>();
 			for(INodePresentation np : nps) {
-				System.out.println("np type=" + np.getType());
+				INodePresentation nnp = null;
 				if(np.getType().equals("Class")) {
-					INodePresentation nnp = cde.createNodePresentation(np.getModel(), np.getLocation());
+					nnp = cde.createNodePresentation(np.getModel(), np.getLocation());
+					//nnp.setHeight(np.getHeight());
+					//nnp.setWidth(np.getWidth());
 					izonCreatedPresentationList.add(nnp);
+				} else if (np.getType().equals("Note")) {
+					nnp = cde.createNote(np.getLabel(), np.getLocation());
+					//nnp.setHeight(np.getHeight());
+					//nnp.setWidth(np.getWidth());
+					izonCreatedPresentationList.add(nnp);
+				} else {
+					System.out.println("np type=" + np.getType());
 				}
 			}
 
@@ -390,11 +408,23 @@ IDiagramEditorSelectionListener
 						.filter(x -> x.getLocation().equals(lp.getTarget().getLocation()))
 						.findFirst();
 				if(source.isPresent() && target.isPresent()) {
-					/* ILinkPresentation nlp = */ cde.createLinkPresentation(lp.getModel(), source.get(), target.get());
+					if(linkPresentationTypes.contains(lp.getType())) {
+						ILinkPresentation nlp = cde.createLinkPresentation(lp.getModel(), source.get(), target.get());
+						//nlp.setAllPoints(lp.getAllPoints());
+					} else if(lp.getType().equals("NoteAnchor")) {
+						ILinkPresentation nlp = null;
+						if(source.get().getType().equals("Note")) {
+							nlp = cde.createNoteAnchor(source.get(), target.get());
+						} else {
+							nlp = cde.createNoteAnchor(target.get(), source.get());
+						}
+						//nlp.setAllPoints(lp.getAllPoints());
+					} else {
+						System.out.println("lp type=" + lp.getType());
+					}
 				}
 			}
 			TransactionManager.endTransaction();
-			logger.log(Level.INFO, "update diagram view.");
 		}catch(Exception e){
 			TransactionManager.abortTransaction();
 			logger.log(Level.WARNING, e.getMessage(), e);
@@ -443,6 +473,7 @@ IDiagramEditorSelectionListener
 	private void updateDiagramView() {
 		deactivateButtons();
 		activateButtons();
+		logger.log(Level.INFO, "update diagram view.");
 	}
 
 	// IPluginExtraTabView
